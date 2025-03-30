@@ -1,4 +1,5 @@
 import { useState } from "react";
+const apiUrl = `https://tidal-download.npotest12343727.workers.dev`;
 
 // Helper function to format duration from seconds to MM:SS
 const formatDuration = (seconds) => {
@@ -21,9 +22,8 @@ const MusicDownloader = () => {
 
     try {
 
-        const apiUrl = `https://tidal-download.npotest12343727.workers.dev/search/?s=${encodedSearchTerm}`;
         
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${apiUrl}/search/?s=${encodedSearchTerm}`);
         
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -35,15 +35,39 @@ const MusicDownloader = () => {
         
         // Transform the API response to match our expected format
         if (data.items && data.items.length > 0) {
-          const formattedResults = data.items.map(item => ({
-            id: item.id,
-            title: item.title,
-            artist: item.artist?.name || (item.artists?.[0]?.name || "Unknown Artist"),
-            duration: formatDuration(item.duration), // Convert seconds to MM:SS format
-            version: item.version || "",
-            album: item.album?.title || "",
-            cover: item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60"
-          }));
+          // Use Promise.all to wait for all download URL fetches to complete
+          const formattedResults = await Promise.all(
+            data.items.map(async item => { // Make sure the callback is async
+              const artistName = item.artist?.name || (item.artists?.[0]?.name || "Unknown Artist");
+              const coverUrl = item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60";
+              let downloadUrl = ""; // Initialize downloadUrl
+
+              try {
+                const downloadResponse = await fetch(`${apiUrl}/track/?id=${item.id}&quality=${item.audioQuality}`);
+                if (!downloadResponse.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                const downloadData = await downloadResponse.json();
+                downloadUrl = downloadData?.[2]?.OriginalTrackUrl || ""; // Assign the value here
+                console.log("Download URL:", downloadUrl);
+              } catch (error) {
+                console.error("Error fetching download URL:", error);
+                // Handle the error appropriately, e.g., set a default download URL or display an error message
+                downloadUrl = ""; // Set a default value in case of error
+              }
+        
+              return {
+                id: item.id,
+                title: item.title,
+                artist: artistName,
+                duration: formatDuration(item.duration), // Convert seconds to MM:SS format
+                version: item.version || "",
+                album: item.album?.title || "",
+                cover: coverUrl,
+                downloadUrl: downloadUrl, // Use the updated downloadUrl
+              };
+            })
+          );
           setResults(formattedResults);
         } else {
           // Fallback for testing if API is not ready
