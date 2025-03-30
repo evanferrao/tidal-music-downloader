@@ -79,7 +79,8 @@ const MusicDownloader = () => {
               duration: "3:45", 
               version: "2011 Remaster",
               album: "Greatest Hits",
-              cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg" 
+              cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
+              downloadUrl: ""
             },
             { 
               id: 2, 
@@ -88,7 +89,8 @@ const MusicDownloader = () => {
               duration: "4:20", 
               version: "Original Mix",
               album: "Singles Collection",
-              cover: "https://via.placeholder.com/60" 
+              cover: "https://via.placeholder.com/60",
+              downloadUrl: ""
             },
           ]);
         }
@@ -103,7 +105,8 @@ const MusicDownloader = () => {
             duration: "3:15", 
             version: "2023 Remaster",
             album: "Album Title One",
-            cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg" 
+            cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
+            downloadUrl: ""
           },
           { 
             id: 2, 
@@ -112,14 +115,25 @@ const MusicDownloader = () => {
             duration: "2:48", 
             version: "Live at Madison Square Garden",
             album: "Concert Collection 2022",
-            cover: "https://via.placeholder.com/60" 
+            cover: "https://via.placeholder.com/60",
+            downloadUrl: ""
           },
         ]);
       }
   };
 
   const handleDownload = (song) => {
-    alert(`Downloading: ${song.title} by ${song.artist}`);
+    if (song.downloadUrl) {
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = song.downloadUrl;
+      link.download = `${song.title} - ${song.artist}.mp3`; // Set the file name
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link); // Clean up the DOM
+    } else {
+      alert("Download link not available.");
+    }
   };
 
   return (
