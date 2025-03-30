@@ -1,5 +1,13 @@
 import { useState } from "react";
 
+// Helper function to format duration from seconds to MM:SS
+const formatDuration = (seconds) => {
+  if (!seconds && seconds !== 0) return "--:--";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 const MusicDownloader = () => {
   const [results, setResults] = useState([]);
 
@@ -7,20 +15,42 @@ const MusicDownloader = () => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const searchTerm = formData.get("searchTerm");
+    
+    // URL encode the search term
+    const encodedSearchTerm = encodeURIComponent(searchTerm);
 
-    // boilerplate code to simulate an API call
+    // Direct API call with CORS handling
     try {
-        const response = await fetch(`https://api.example.com/search?q=${searchTerm}`);
+        const corsAnywhere = "https://cors-anywhere.herokuapp.com/";
+        // Alternatively: const corsProxy = "https://corsproxy.io/?";
+        
+        const apiUrl = `${corsAnywhere}https://tidal.401658.xyz/search/?s=${encodedSearchTerm}`;
+        console.log("Using direct API call with CORS proxy:", apiUrl);
+        
+        const response = await fetch(apiUrl);
         
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
+        console.log("API Response Status:", response.status);
         
         const data = await response.json();
-        setResults(data.songs || []);
+        console.log("API Response:", data);
         
-        // Fallback for testing if API is not ready
-        if (!data.songs || data.songs.length === 0) {
+        // Transform the API response to match our expected format
+        if (data.items && data.items.length > 0) {
+          const formattedResults = data.items.map(item => ({
+            id: item.id,
+            title: item.title,
+            artist: item.artist?.name || (item.artists?.[0]?.name || "Unknown Artist"),
+            duration: formatDuration(item.duration), // Convert seconds to MM:SS format
+            version: item.version || "",
+            album: item.album?.title || "",
+            cover: item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60"
+          }));
+          setResults(formattedResults);
+        } else {
+          // Fallback for testing if API is not ready
           setResults([
             { 
               id: 1, 
@@ -82,7 +112,7 @@ const MusicDownloader = () => {
           name="searchTerm"
           placeholder="Search Music"
           className="w-full p-3 rounded-lg bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          defaultValue="test"
+          defaultValue="shapeofyou"
         />
         <button
           type="submit"
