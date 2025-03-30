@@ -22,23 +22,50 @@ const MusicDownloader = () => {
         // Fallback for testing if API is not ready
         if (!data.songs || data.songs.length === 0) {
           setResults([
-            { id: 1, title: "Default 1", artist: "Default 1" },
-            { id: 2, title: "Empty API Response", artist: "Default 2" },
+            { 
+              id: 1, 
+              title: "Default 1", 
+              artist: "Default 1", 
+              duration: "3:45", 
+              version: "2011 Remaster",
+              album: "Greatest Hits",
+              cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg" 
+            },
+            { 
+              id: 2, 
+              title: "Empty API Response", 
+              artist: "Default 2", 
+              duration: "4:20", 
+              version: "Original Mix",
+              album: "Singles Collection",
+              cover: "https://via.placeholder.com/60" 
+            },
           ]);
         }
       } catch (error) {
         console.error("Error fetching results:", error);
         // Set some sample data for testing
         setResults([
-          { id: 1, title: "Song 1", artist: "Artist 1" },
-          { id: 2, title: "Song 2", artist: "Artist 2" },
+          { 
+            id: 1, 
+            title: "Song 1", 
+            artist: "Artist 1", 
+            duration: "3:15", 
+            version: "2023 Remaster",
+            album: "Album Title One",
+            cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg" 
+          },
+          { 
+            id: 2, 
+            title: "Song 2", 
+            artist: "Artist 2", 
+            duration: "2:48", 
+            version: "Live at Madison Square Garden",
+            album: "Concert Collection 2022",
+            cover: "https://via.placeholder.com/60" 
+          },
         ]);
       }
-
-    // setResults([
-    //     { id: 1, title: "Song 1", artist: "Artist 1" },
-    //     { id: 2, title: "Song 2", artist: "Artist 8" },
-    //   ]);
   };
 
   const handleDownload = (song) => {
@@ -67,17 +94,47 @@ const MusicDownloader = () => {
       
       <div className="w-full max-w-lg mt-6 space-y-4">
         {results.map((song) => (
-          <div key={song.id} className="bg-gray-900 p-4 rounded-lg flex justify-between items-center">
-            <div>
-              <p className="text-lg font-medium">{song.title}</p>
-              <p className="text-gray-400">{song.artist}</p>
+          <div 
+            key={song.id} 
+            className="bg-gray-900 p-4 rounded-lg flex flex-col relative group"
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <img 
+                  src={song.cover || "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg"} 
+                  alt={`${song.title} album cover`}
+                  className="w-12 h-12 rounded mr-3 object-cover"
+                />
+                <div>
+                  <p className="text-lg font-medium">{song.title}</p>
+                  <div className="flex items-center text-gray-400 text-sm">
+                    <span>{song.artist}</span>
+                    <span className="mx-2">•</span>
+                    <span>{song.duration || "--:--"}</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
+                onClick={() => handleDownload(song)}
+              >
+                Download
+              </button>
             </div>
-            <button
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
-              onClick={() => handleDownload(song)}
-            >
-              Download
-            </button>
+            
+            {/* Album info at the bottom of card */}
+            {song.album && (
+              <p className="text-xs text-gray-500 mt-3 pl-15 ml-15">
+                From album: {song.album}
+              </p>
+            )}
+            
+            {/* Version tooltip that appears on hover */}
+            {song.version && (
+              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-3 py-1 bg-gray-800 text-xs text-white rounded pointer-events-none">
+                {song.version}
+              </div>
+            )}
           </div>
         ))}
       </div>
