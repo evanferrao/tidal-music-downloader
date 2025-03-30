@@ -8,12 +8,37 @@ const MusicDownloader = () => {
     const formData = new FormData(event.currentTarget);
     const searchTerm = formData.get("searchTerm");
 
+    // boilerplate code to simulate an API call
+    try {
+        const response = await fetch(`https://api.example.com/search?q=${searchTerm}`);
+        
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        
+        const data = await response.json();
+        setResults(data.songs || []);
+        
+        // Fallback for testing if API is not ready
+        if (!data.songs || data.songs.length === 0) {
+          setResults([
+            { id: 1, title: "Default 1", artist: "Default 1" },
+            { id: 2, title: "Empty API Response", artist: "Default 2" },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching results:", error);
+        // Set some sample data for testing
+        setResults([
+          { id: 1, title: "Song 1", artist: "Artist 1" },
+          { id: 2, title: "Song 2", artist: "Artist 2" },
+        ]);
+      }
 
-    // Simulate an API call
-    setResults([
-        { id: 1, title: "Song 1", artist: "Artist 1" },
-        { id: 2, title: "Song 2", artist: "Artist 2" },
-      ]);
+    // setResults([
+    //     { id: 1, title: "Song 1", artist: "Artist 1" },
+    //     { id: 2, title: "Song 2", artist: "Artist 8" },
+    //   ]);
   };
 
   const handleDownload = (song) => {
