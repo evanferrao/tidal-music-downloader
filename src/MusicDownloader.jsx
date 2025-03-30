@@ -19,13 +19,9 @@ const MusicDownloader = () => {
     // URL encode the search term
     const encodedSearchTerm = encodeURIComponent(searchTerm);
 
-    // Direct API call with CORS handling
     try {
-        const corsAnywhere = "https://cors-anywhere.herokuapp.com/";
-        // Alternatively: const corsProxy = "https://corsproxy.io/?";
-        
-        const apiUrl = `${corsAnywhere}https://tidal.401658.xyz/search/?s=${encodedSearchTerm}`;
-        console.log("Using direct API call with CORS proxy:", apiUrl);
+
+        const apiUrl = `https://tidal-download.npotest12343727.workers.dev/search/?s=${encodedSearchTerm}`;
         
         const response = await fetch(apiUrl);
         
@@ -112,7 +108,7 @@ const MusicDownloader = () => {
           name="searchTerm"
           placeholder="Search Music"
           className="w-full p-3 rounded-lg bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          defaultValue="shapeofyou"
+          defaultValue="Shape"
         />
         <button
           type="submit"
