@@ -14,6 +14,7 @@ const formatDuration = (seconds) => {
 
 const MusicDownloader = () => {
   const [results, setResults] = useState([]);
+  const [downloadingId, setDownloadingId] = useState(null); // Track the ID of the song being downloaded
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -155,20 +156,30 @@ const MusicDownloader = () => {
 
   const handleDownload = async (song) => {
     if (song.downloadUrl) {
+      setDownloadingId(song.id);
       try {
-        const response = await fetch(song.downloadUrl, { mode: 'cors' });
+        const response = await fetch(song.downloadUrl);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch the file");
+        }
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+
+        const link = document.createElement("a");
         link.href = url;
-        link.setAttribute('download', `${song.title} - ${song.artist}.mp3`);
+        link.setAttribute("download", `${song.title} - ${song.artist}.mp3`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(url); // Clean up the URL object
+
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Error downloading file:", error);
         alert("Error downloading file.");
+      } finally {
+        setDownloadingId(null);
       }
     } else {
       alert("Download link not available.");
@@ -219,10 +230,15 @@ const MusicDownloader = () => {
                   </div>
                 </div>
                 <button
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
+                  className={`px-4 py-2 rounded-lg text-white font-semibold ${
+                    downloadingId === song.id
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-500"
+                  }`}
                   onClick={() => handleDownload(song)}
+                  disabled={downloadingId === song.id} // Disable the button while downloading
                 >
-                  Download
+                  {downloadingId === song.id ? "Downloading..." : "Download"}
                 </button>
               </div>
               
