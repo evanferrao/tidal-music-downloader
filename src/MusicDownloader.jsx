@@ -45,7 +45,8 @@ const MusicDownloader = () => {
               let downloadUrl = ""; // Initialize downloadUrl
 
               try {
-                const downloadResponse = await fetch(`${apiUrl}/track/?id=${item.id}&quality=${item.audioQuality}`);
+                const cacheBuster = Date.now();
+                const downloadResponse = await fetch(`${apiUrl}/track/?id=${item.id}&quality=${item.audioQuality}&cb=${cacheBuster}`);
                 if (!downloadResponse.ok) {
                   throw new Error('Network response was not ok');
                 }
