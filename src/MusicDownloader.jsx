@@ -2,6 +2,7 @@ import { useState } from "react";
 import Plyr from 'plyr-react';
 import 'plyr-react/plyr.css';
 import Footer from './Footer';
+import './plyr-custom.css';
 const apiUrl = `https://tidal-download.npotest12343727.workers.dev`;
 
 // Helper function to format duration from seconds to MM:SS

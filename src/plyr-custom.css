@@ -1,0 +1,25 @@
+/* Custom styles for the Plyr player */
+.plyr {
+  background-color:  #181A1B !important; /* Dark background */
+  color: #ffffff !important; /* White text for controls */
+}
+
+.plyr__controls {
+  background-color: #181A1B !important; /* Darker background for controls */
+}
+
+.plyr__control {
+  color: #ffffff !important; /* White icons for controls */
+}
+
+.plyr__control:hover {
+  background-color: #444444 !important; /* Slightly lighter hover effect */
+}
+
+.plyr__progress--buffer {
+  background-color: #4a5568 !important; /* Buffer bar color */
+}
+
+.plyr__progress--played {
+  background-color: #805ad5 !important; /* Played bar color (purple) */
+}
