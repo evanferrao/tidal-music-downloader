@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Plyr from 'plyr-react';
+import 'plyr-react/plyr.css';
 const apiUrl = `https://tidal-download.npotest12343727.workers.dev`;
 
 // Helper function to format duration from seconds to MM:SS
@@ -49,7 +51,7 @@ const MusicDownloader = () => {
                 }
                 const downloadData = await downloadResponse.json();
                 downloadUrl = downloadData?.[2]?.OriginalTrackUrl || ""; // Assign the value here
-                console.log("Download URL:", downloadUrl);
+                //console.log("Download URL:", downloadUrl);
               } catch (error) {
                 console.error("Error fetching download URL:", error);
                 // Handle the error appropriately, e.g., set a default download URL or display an error message
@@ -199,6 +201,18 @@ const MusicDownloader = () => {
                 {song.version}
               </div>
             )}
+              {song.downloadUrl && (
+                <>
+                  {console.log("Download URL:", song.downloadUrl)}
+                  <Plyr
+                    source={{
+                      type: 'audio',
+                      sources: [{ src: song.downloadUrl, type: 'audio/mp3' }],
+                    }}
+                    options={{}}
+                  />
+                </>
+              )}
           </div>
         ))}
       </div>
