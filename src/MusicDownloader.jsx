@@ -18,8 +18,10 @@ const MusicDownloader = () => {
   const handleSearch = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const searchTerm = formData.get("searchTerm");
+    // if search term is empty, return Bohemian Rhapsody
+    const searchTerm = formData.get("searchTerm") || "Bohemian Rhapsody";
     
+
     // URL encode the search term
     const encodedSearchTerm = encodeURIComponent(searchTerm);
 
@@ -35,10 +37,8 @@ const MusicDownloader = () => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        console.log("API Response Status:", response.status);
         
         const data = await response.json();
-        console.log("API Response:", data);
         
         // Transform the API response to match our expected format
         if (data.items && data.items.length > 0) {
@@ -186,7 +186,7 @@ const MusicDownloader = () => {
             name="searchTerm"
             placeholder="Search Music"
             className="w-full p-3 rounded-lg bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            defaultValue="Shape"
+            defaultValue=""
           />
           <button
             type="submit"
