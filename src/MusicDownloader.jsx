@@ -15,15 +15,14 @@ const formatDuration = (seconds) => {
 const MusicDownloader = () => {
   const [results, setResults] = useState([]);
   const [downloadingId, setDownloadingId] = useState(null); // Track the ID of the song being downloaded
+  const [searching, setSearching] = useState(false); // Track whether a search is in progress
 
   const handleSearch = async (event) => {
     event.preventDefault();
+    setSearching(true); // Set searching state to true
     const formData = new FormData(event.currentTarget);
-    // if search term is empty, return Bohemian Rhapsody
     const searchTerm = formData.get("searchTerm") || "Bohemian Rhapsody";
-    
 
-    // URL encode the search term
     const encodedSearchTerm = encodeURIComponent(searchTerm);
 
     let attempts = 0;
@@ -41,19 +40,15 @@ const MusicDownloader = () => {
         
         const data = await response.json();
         
-        // Transform the API response to match our expected format
         if (data.items && data.items.length > 0) {
-          // Use Promise.all to wait for all download URL fetches to complete
           const formattedResults = await Promise.all(
-            data.items.map(async item => { // Make sure the callback is async
+            data.items.map(async item => {
               const artistName = item.artist?.name || (item.artists?.[0]?.name || "Unknown Artist");
               const coverUrl = item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60";
-              let downloadUrl = ""; // Initialize downloadUrl
+              let downloadUrl = "";
 
-              // Retry logic for fetching download URL
               let downloadAttempts = 0;
               const maxDownloadAttempts = 2;
-              let lastDownloadError = null;
 
               while (downloadAttempts < maxDownloadAttempts) {
                 try {
@@ -67,58 +62,30 @@ const MusicDownloader = () => {
 
                   const downloadData = await downloadResponse.json();
                   downloadUrl = downloadData?.[2]?.OriginalTrackUrl || "";
-                  break; // Success, break out of the retry loop
+                  break;
                 } catch (error) {
                   console.error(`Attempt ${downloadAttempts}: Error fetching download URL:`, error);
-                  lastDownloadError = error;           
                 }
               }
 
-              if (!downloadUrl && lastDownloadError) {
-                console.error("Failed to fetch download URL after multiple attempts:", lastDownloadError);
-                // Handle the error appropriately, e.g., set a default download URL or display an error message
-                downloadUrl = ""; // Set a default value in case of error
-              }
-        
               return {
                 id: item.id,
                 title: item.title,
                 artist: artistName,
-                duration: formatDuration(item.duration), // Convert seconds to MM:SS format
+                duration: formatDuration(item.duration),
                 version: item.version || "",
                 album: item.album?.title || "",
                 cover: coverUrl,
-                downloadUrl: downloadUrl, // Use the updated downloadUrl
+                downloadUrl: downloadUrl,
               };
             })
           );
           setResults(formattedResults);
-          break; // Break out of the search retry loop if successful
+          break;
         } else {
           console.log("Empty API Response");
-          setResults([
-            { 
-              id: 1, 
-              title: "Default 1", 
-              artist: "Default 1", 
-              duration: "3:45", 
-              version: "2011 Remaster",
-              album: "Greatest Hits",
-              cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
-              downloadUrl: ""
-            },
-            { 
-              id: 2, 
-              title: "Empty API Response", 
-              artist: "Default 2", 
-              duration: "4:20", 
-              version: "Original Mix",
-              album: "Singles Collection",
-              cover: "https://via.placeholder.com/60",
-              downloadUrl: ""
-            },
-          ]);
-          break; // Break out of the search retry loop if successful (even with empty response)
+          setResults([]);
+          break;
         }
       } catch (error) {
         console.error(`Attempt ${attempts}: Error fetching results:`, error);
@@ -128,30 +95,10 @@ const MusicDownloader = () => {
 
     if (lastError) {
       console.error("Failed to fetch search results after multiple attempts:", lastError);
-      // Set some sample data for testing
-      setResults([
-        { 
-          id: 1, 
-          title: "Song 1", 
-          artist: "Artist 1", 
-          duration: "3:15", 
-          version: "2023 Remaster",
-          album: "Album Title One",
-          cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
-          downloadUrl: ""
-        },
-        { 
-          id: 2, 
-          title: "Song 2", 
-          artist: "Artist 2", 
-          duration: "2:48", 
-          version: "Live at Madison Square Garden",
-          album: "Concert Collection 2022",
-          cover: "https://via.placeholder.com/60",
-          downloadUrl: ""
-        },
-      ]);
+      setResults([]);
     }
+
+    setSearching(false); // Reset searching state
   };
 
   const handleDownload = async (song) => {
@@ -201,9 +148,14 @@ const MusicDownloader = () => {
           />
           <button
             type="submit"
-            className="px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
+            className={`px-4 py-3 rounded-lg text-white font-semibold ${
+              searching
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-500"
+            }`}
+            disabled={searching} // Disable the button while searching
           >
-            Search
+            {searching ? "Searching..." : "Search"}
           </button>
         </form>
         
