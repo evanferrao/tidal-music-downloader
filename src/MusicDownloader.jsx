@@ -127,6 +127,16 @@ const MusicDownloader = () => {
           const totalSize = parseInt(contentLength, 10);
           let downloadedSize = 0;
 
+          // Determine the file extension from the Content-Type header
+          const contentType = response.headers.get("Content-Type");
+          let fileExtension = "flac"; // Default to .flac if the type is unknown as Tidal is a lossless service
+          if (contentType) {
+            if (contentType.includes("audio/mpeg")) fileExtension = "mp3";
+            else if (contentType.includes("audio/flac")) fileExtension = "flac";
+            else if (contentType.includes("audio/mp4") || contentType.includes("video/mp4")) fileExtension = "mp4";
+            else if (contentType.includes("audio/wav")) fileExtension = "wav";
+          }
+
           // Create a readable stream to track progress
           const reader = response.body.getReader();
           const chunks = [];
@@ -138,9 +148,14 @@ const MusicDownloader = () => {
             chunks.push(value);
             downloadedSize += value.length;
 
-            // Calculate and log the download progress
+            // Calculate the download progress
             const progress = Math.round((downloadedSize / totalSize) * 100);
-            console.log(`Download progress: ${progress}%`);
+
+            // Update the button's background color dynamically
+            const button = document.getElementById(`download-button-${song.id}`);
+            if (button) {
+              button.style.background = `linear-gradient(to right, #805ad5 ${progress}%, #4a5568 ${progress}%)`;
+            }
           }
 
           // Ensure the entire file is downloaded
@@ -155,8 +170,10 @@ const MusicDownloader = () => {
           // Create a temporary link element
           const link = document.createElement("a");
           link.href = url;
+
+          // Ensure the filename includes the correct extension
           const timestamp = Date.now();
-          link.setAttribute("download", `${song.title} - ${song.artist} - (${timestamp})`);
+          link.setAttribute("download", `${song.title} - ${song.artist} - (${timestamp}).${fileExtension}`);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -233,11 +250,15 @@ const MusicDownloader = () => {
                   </div>
                 </div>
                 <button
+                  id={`download-button-${song.id}`} // Add a unique ID for each button
                   className={`px-4 py-2 rounded-lg text-white font-semibold ${
                     downloadingId === song.id
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-500"
+                      ? "cursor-not-allowed"
+                      : "hover:bg-purple-500"
                   }`}
+                  style={{
+                    background: downloadingId === song.id ? "linear-gradient(to right, #805ad5 0%, #4a5568 0%)" : "#805ad5",
+                  }} // Initialize the button as purple
                   onClick={() => handleDownload(song)}
                   disabled={downloadingId === song.id} // Disable the button while downloading
                 >
