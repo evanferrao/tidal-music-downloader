@@ -103,32 +103,82 @@ const MusicDownloader = () => {
 
   const handleDownload = async (song) => {
     if (song.downloadUrl) {
-      setDownloadingId(song.id);
-      try {
-        const response = await fetch(song.downloadUrl);
+      setDownloadingId(song.id); // Set the downloading state for the current song
+      const maxRetries = 3; // Maximum number of retries
+      let attempts = 0;
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch the file");
+      while (attempts < maxRetries) {
+        try {
+          attempts++;
+          console.log(`Download attempt ${attempts} for ${song.title}`);
+
+          const response = await fetch(song.downloadUrl);
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch the file");
+          }
+
+          // Get the total file size from the response headers
+          const contentLength = response.headers.get("Content-Length");
+          if (!contentLength) {
+            throw new Error("Unable to determine file size");
+          }
+
+          const totalSize = parseInt(contentLength, 10);
+          let downloadedSize = 0;
+
+          // Create a readable stream to track progress
+          const reader = response.body.getReader();
+          const chunks = [];
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            chunks.push(value);
+            downloadedSize += value.length;
+
+            // Calculate and log the download progress
+            const progress = Math.round((downloadedSize / totalSize) * 100);
+            console.log(`Download progress: ${progress}%`);
+          }
+
+          // Ensure the entire file is downloaded
+          if (downloadedSize !== totalSize) {
+            throw new Error("Incomplete download. File size mismatch.");
+          }
+
+          // Combine all chunks into a single blob
+          const blob = new Blob(chunks);
+          const url = window.URL.createObjectURL(blob);
+
+          // Create a temporary link element
+          const link = document.createElement("a");
+          link.href = url;
+          const timestamp = Date.now();
+          link.setAttribute("download", `${song.title} - ${song.artist} - (${timestamp})`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Revoke the temporary URL to free up memory
+          window.URL.revokeObjectURL(url);
+
+          console.log(`Download completed successfully for ${song.title}`);
+          break; // Exit the retry loop if the download is successful
+        } catch (error) {
+          console.error(`Error during download attempt ${attempts}:`, error);
+
+          if (attempts >= maxRetries) {
+            alert(`Failed to download ${song.title} after ${maxRetries} attempts.`);
+            break; // Exit the loop after reaching the maximum retries
+          }
+
+          console.warn(`Retrying download for ${song.title}... (${attempts}/${maxRetries})`);
         }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = url;
-        const timestamp = Date.now();
-        link.setAttribute("download", `${song.title} - ${song.artist} (${timestamp})`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading file:", error);
-        alert("Error downloading file.");
-      } finally {
-        setDownloadingId(null);
       }
+
+      setDownloadingId(null); // Reset the downloading state
     } else {
       alert("Download link not available.");
     }
