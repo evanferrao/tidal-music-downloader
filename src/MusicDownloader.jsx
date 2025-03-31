@@ -124,15 +124,23 @@ const MusicDownloader = () => {
       }
   };
 
-  const handleDownload = (song) => {
+  const handleDownload = async (song) => {
     if (song.downloadUrl) {
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = song.downloadUrl;
-      link.download = `${song.title} - ${song.artist}.mp3`; // Set the file name
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link); // Clean up the DOM
+      try {
+        const response = await fetch(song.downloadUrl, { mode: 'cors' });
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${song.title} - ${song.artist}.mp3`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url); // Clean up the URL object
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        alert("Error downloading file.");
+      }
     } else {
       alert("Download link not available.");
     }
@@ -203,7 +211,6 @@ const MusicDownloader = () => {
             )}
               {song.downloadUrl && (
                 <>
-                  {console.log("Download URL:", song.downloadUrl)}
                   <Plyr
                     source={{
                       type: 'audio',
