@@ -116,7 +116,8 @@ const MusicDownloader = () => {
 
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `${song.title} - ${song.artist}.mp3`);
+        const timestamp = Date.now();
+        link.setAttribute("download", `${song.title} - ${song.artist} (${timestamp})`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
