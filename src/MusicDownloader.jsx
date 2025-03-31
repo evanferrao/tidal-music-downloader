@@ -3,6 +3,7 @@ import Plyr from 'plyr-react';
 import 'plyr-react/plyr.css';
 const apiUrl = `https://tidal-download.npotest12343727.workers.dev`;
 
+
 // Helper function to format duration from seconds to MM:SS
 const formatDuration = (seconds) => {
   if (!seconds && seconds !== 0) return "--:--";
@@ -22,9 +23,13 @@ const MusicDownloader = () => {
     // URL encode the search term
     const encodedSearchTerm = encodeURIComponent(searchTerm);
 
-    try {
+    let attempts = 0;
+    const maxAttempts = 2;
+    let lastError = null;
 
-        
+    while (attempts < maxAttempts) {
+      try {
+        attempts++;
         const response = await fetch(`${apiUrl}/search/?s=${encodedSearchTerm}`);
         
         if (!response.ok) {
@@ -44,17 +49,32 @@ const MusicDownloader = () => {
               const coverUrl = item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60";
               let downloadUrl = ""; // Initialize downloadUrl
 
-              try {
-                const cacheBuster = Date.now();
-                const downloadResponse = await fetch(`${apiUrl}/track/?id=${item.id}&quality=${item.audioQuality}&cb=${cacheBuster}`);
-                if (!downloadResponse.ok) {
-                  throw new Error('Network response was not ok');
+              // Retry logic for fetching download URL
+              let downloadAttempts = 0;
+              const maxDownloadAttempts = 2;
+              let lastDownloadError = null;
+
+              while (downloadAttempts < maxDownloadAttempts) {
+                try {
+                  downloadAttempts++;
+                  const cacheBuster = Date.now();
+                  const downloadResponse = await fetch(`${apiUrl}/track/?id=${item.id}&quality=${item.audioQuality}&cb=${cacheBuster}`);
+
+                  if (!downloadResponse.ok) {
+                    throw new Error(`Attempt ${downloadAttempts}: Network response was not ok`);
+                  }
+
+                  const downloadData = await downloadResponse.json();
+                  downloadUrl = downloadData?.[2]?.OriginalTrackUrl || "";
+                  break; // Success, break out of the retry loop
+                } catch (error) {
+                  console.error(`Attempt ${downloadAttempts}: Error fetching download URL:`, error);
+                  lastDownloadError = error;           
                 }
-                const downloadData = await downloadResponse.json();
-                downloadUrl = downloadData?.[2]?.OriginalTrackUrl || ""; // Assign the value here
-                //console.log("Download URL:", downloadUrl);
-              } catch (error) {
-                console.error("Error fetching download URL:", error);
+              }
+
+              if (!downloadUrl && lastDownloadError) {
+                console.error("Failed to fetch download URL after multiple attempts:", lastDownloadError);
                 // Handle the error appropriately, e.g., set a default download URL or display an error message
                 downloadUrl = ""; // Set a default value in case of error
               }
@@ -72,8 +92,9 @@ const MusicDownloader = () => {
             })
           );
           setResults(formattedResults);
+          break; // Break out of the search retry loop if successful
         } else {
-          // Fallback for testing if API is not ready
+          console.log("Empty API Response");
           setResults([
             { 
               id: 1, 
@@ -96,33 +117,40 @@ const MusicDownloader = () => {
               downloadUrl: ""
             },
           ]);
+          break; // Break out of the search retry loop if successful (even with empty response)
         }
       } catch (error) {
-        console.error("Error fetching results:", error);
-        // Set some sample data for testing
-        setResults([
-          { 
-            id: 1, 
-            title: "Song 1", 
-            artist: "Artist 1", 
-            duration: "3:15", 
-            version: "2023 Remaster",
-            album: "Album Title One",
-            cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
-            downloadUrl: ""
-          },
-          { 
-            id: 2, 
-            title: "Song 2", 
-            artist: "Artist 2", 
-            duration: "2:48", 
-            version: "Live at Madison Square Garden",
-            album: "Concert Collection 2022",
-            cover: "https://via.placeholder.com/60",
-            downloadUrl: ""
-          },
-        ]);
+        console.error(`Attempt ${attempts}: Error fetching results:`, error);
+        lastError = error;
       }
+    }
+
+    if (lastError) {
+      console.error("Failed to fetch search results after multiple attempts:", lastError);
+      // Set some sample data for testing
+      setResults([
+        { 
+          id: 1, 
+          title: "Song 1", 
+          artist: "Artist 1", 
+          duration: "3:15", 
+          version: "2023 Remaster",
+          album: "Album Title One",
+          cover: "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg",
+          downloadUrl: ""
+        },
+        { 
+          id: 2, 
+          title: "Song 2", 
+          artist: "Artist 2", 
+          duration: "2:48", 
+          version: "Live at Madison Square Garden",
+          album: "Concert Collection 2022",
+          cover: "https://via.placeholder.com/60",
+          downloadUrl: ""
+        },
+      ]);
+    }
   };
 
   const handleDownload = async (song) => {
