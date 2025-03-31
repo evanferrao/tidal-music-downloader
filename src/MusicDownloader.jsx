@@ -46,6 +46,7 @@ const MusicDownloader = () => {
               const artistName = item.artist?.name || (item.artists?.[0]?.name || "Unknown Artist");
               const coverUrl = item.album?.cover ? `https://resources.tidal.com/images/${item.album.cover.replace(/-/g, "/")}/1280x1280.jpg` : "https://via.placeholder.com/60";
               let downloadUrl = "";
+              let fileExtension = "flac"; // Default to flac
 
               let downloadAttempts = 0;
               const maxDownloadAttempts = 2;
@@ -62,6 +63,19 @@ const MusicDownloader = () => {
 
                   const downloadData = await downloadResponse.json();
                   downloadUrl = downloadData?.[2]?.OriginalTrackUrl || "";
+
+                  // Fetch the Content-Type header to determine the file extension
+                  if (downloadUrl) {
+                    const headResponse = await fetch(downloadUrl, { method: "HEAD" });
+                    const contentType = headResponse.headers.get("Content-Type");
+                    if (contentType) {
+                      if (contentType.includes("audio/mpeg") || contentType.includes("audio/mp4")) fileExtension = "mp3";
+                      else if (contentType.includes("audio/flac")) fileExtension = "flac";
+                      else if (contentType.includes("video/mp4")) fileExtension = "mp4";
+                      else if (contentType.includes("audio/wav")) fileExtension = "wav";
+                    }
+                  }
+
                   break;
                 } catch (error) {
                   console.error(`Attempt ${downloadAttempts}: Error fetching download URL:`, error);
@@ -77,6 +91,8 @@ const MusicDownloader = () => {
                 album: item.album?.title || "",
                 cover: coverUrl,
                 downloadUrl: downloadUrl,
+                audioQuality: item.audioQuality || "Unknown Quality", // Add audio quality
+                fileExtension: fileExtension, // Set the correct file extension
               };
             })
           );
@@ -127,16 +143,6 @@ const MusicDownloader = () => {
           const totalSize = parseInt(contentLength, 10);
           let downloadedSize = 0;
 
-          // Determine the file extension from the Content-Type header
-          const contentType = response.headers.get("Content-Type");
-          let fileExtension = "flac"; // Default to .flac if the type is unknown as Tidal is a lossless service
-          if (contentType) {
-            if (contentType.includes("audio/mpeg")) fileExtension = "mp3";
-            else if (contentType.includes("audio/flac")) fileExtension = "flac";
-            else if (contentType.includes("audio/mp4") || contentType.includes("video/mp4")) fileExtension = "mp4";
-            else if (contentType.includes("audio/wav")) fileExtension = "wav";
-          }
-
           // Create a readable stream to track progress
           const reader = response.body.getReader();
           const chunks = [];
@@ -173,7 +179,7 @@ const MusicDownloader = () => {
 
           // Ensure the filename includes the correct extension
           const timestamp = Date.now();
-          link.setAttribute("download", `${song.title} - ${song.artist} - (${timestamp}).${fileExtension}`);
+          link.setAttribute("download", `${song.title} - ${song.artist}.${song.fileExtension}`);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -249,21 +255,26 @@ const MusicDownloader = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  id={`download-button-${song.id}`} // Add a unique ID for each button
-                  className={`px-4 py-2 rounded-lg text-white font-semibold ${
-                    downloadingId === song.id
-                      ? "cursor-not-allowed"
-                      : "hover:bg-purple-500"
-                  }`}
-                  style={{
-                    background: downloadingId === song.id ? "linear-gradient(to right, #805ad5 0%, #4a5568 0%)" : "#805ad5",
-                  }} // Initialize the button as purple
-                  onClick={() => handleDownload(song)}
-                  disabled={downloadingId === song.id} // Disable the button while downloading
-                >
-                  {downloadingId === song.id ? "Downloading..." : "Download"}
-                </button>
+                <div className="flex flex-col items-end">
+                  <button
+                    id={`download-button-${song.id}`} // Add a unique ID for each button
+                    className={`px-4 py-2 rounded-lg text-white font-semibold ${
+                      downloadingId === song.id
+                        ? "cursor-not-allowed"
+                        : "hover:bg-purple-500"
+                    }`}
+                    style={{
+                      background: downloadingId === song.id ? "linear-gradient(to right, #805ad5 0%, #4a5568 0%)" : "#805ad5",
+                    }} // Initialize the button as purple
+                    onClick={() => handleDownload(song)}
+                    disabled={downloadingId === song.id} // Disable the button while downloading
+                  >
+                    {downloadingId === song.id ? "Downloading..." : "Download"}
+                  </button>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {song.audioQuality} | {song.fileExtension}
+                  </p> {/* Display audio quality and file extension */}
+                </div>
               </div>
               
               {song.album && (
