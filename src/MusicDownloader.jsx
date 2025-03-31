@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Plyr from 'plyr-react';
 import 'plyr-react/plyr.css';
+import Footer from './Footer';
 const apiUrl = `https://tidal-download.npotest12343727.workers.dev`;
-
 
 // Helper function to format duration from seconds to MM:SS
 const formatDuration = (seconds) => {
@@ -176,68 +176,67 @@ const MusicDownloader = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-6">
-      <h1 className="text-3xl font-bold mb-6">Music Downloader</h1>
-      
-      <form onSubmit={handleSearch} className="w-full max-w-lg flex gap-2">
-        <input
-          type="text"
-          name="searchTerm"
-          placeholder="Search Music"
-          className="w-full p-3 rounded-lg bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          defaultValue="Shape"
-        />
-        <button
-          type="submit"
-          className="px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
-        >
-          Search
-        </button>
-      </form>
-      
-      <div className="w-full max-w-lg mt-6 space-y-4">
-        {results.map((song) => (
-          <div 
-            key={song.id} 
-            className="bg-gray-900 p-4 rounded-lg flex flex-col relative group"
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      <div className="flex-grow flex flex-col items-center p-6">
+        <h1 className="text-3xl font-bold mb-6">Music Downloader</h1>
+        
+        <form onSubmit={handleSearch} className="w-full max-w-lg flex gap-2">
+          <input
+            type="text"
+            name="searchTerm"
+            placeholder="Search Music"
+            className="w-full p-3 rounded-lg bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            defaultValue="Shape"
+          />
+          <button
+            type="submit"
+            className="px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
           >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <img 
-                  src={song.cover || "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg"} 
-                  alt={`${song.title} album cover`}
-                  className="w-12 h-12 rounded mr-3 object-cover"
-                />
-                <div>
-                  <p className="text-lg font-medium">{song.title}</p>
-                  <div className="flex items-center text-gray-400 text-sm">
-                    <span>{song.artist}</span>
-                    <span className="mx-2">•</span>
-                    <span>{song.duration || "--:--"}</span>
+            Search
+          </button>
+        </form>
+        
+        <div className="w-full max-w-lg mt-6 space-y-4">
+          {results.map((song) => (
+            <div 
+              key={song.id} 
+              className="bg-gray-900 p-4 rounded-lg flex flex-col relative group"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <img 
+                    src={song.cover || "https://resources.tidal.com/images/e3450cf9/3fe2/4d5f/abb8/bc9fc9b54a39/1280x1280.jpg"} 
+                    alt={`${song.title} album cover`}
+                    className="w-12 h-12 rounded mr-3 object-cover"
+                  />
+                  <div>
+                    <p className="text-lg font-medium">{song.title}</p>
+                    <div className="flex items-center text-gray-400 text-sm">
+                      <span>{song.artist}</span>
+                      <span className="mx-2">•</span>
+                      <span>{song.duration || "--:--"}</span>
+                    </div>
                   </div>
                 </div>
+                <button
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
+                  onClick={() => handleDownload(song)}
+                >
+                  Download
+                </button>
               </div>
-              <button
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
-                onClick={() => handleDownload(song)}
-              >
-                Download
-              </button>
-            </div>
-            
-            {/* Album info at the bottom of card */}
-            {song.album && (
-              <p className="text-xs text-gray-500 mt-3 pl-15 ml-15">
-                From album: {song.album}
-              </p>
-            )}
-            
-            {/* Version tooltip that appears on hover */}
-            {song.version && (
-              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-3 py-1 bg-gray-800 text-xs text-white rounded pointer-events-none">
-                {song.version}
-              </div>
-            )}
+              
+              {song.album && (
+                <p className="text-xs text-gray-500 mt-3 pl-15 ml-15">
+                  From album: {song.album}
+                </p>
+              )}
+              
+              {song.version && (
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-3 py-1 bg-gray-800 text-xs text-white rounded pointer-events-none">
+                  {song.version}
+                </div>
+              )}
               {song.downloadUrl && (
                 <>
                   <Plyr
@@ -249,9 +248,11 @@ const MusicDownloader = () => {
                   />
                 </>
               )}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
